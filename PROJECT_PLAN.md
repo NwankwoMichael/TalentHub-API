@@ -75,3 +75,12 @@ Company
 Job
 |
 -> Applications
+
+Architect Question #1
+
+## Why should Applications be a separate module instead of simply storing applicants inside jobs?
+
+Answer: Jobs should focus on job postings, while Applications should focus on the interaction between candidates and jobs.
+
+In other words:
+Aside from the fact that having a separate Application skeeps things clean, it becomes easy to separate concerns as Job module handles posting of job and direct link to the Company and Applications can handle direct link to Users and both Company and User can interact through the link between Job and Application. This avoids a clustered Job module which would have been linked to both Company and User(Candidates)
