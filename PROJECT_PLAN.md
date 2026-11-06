@@ -12,15 +12,15 @@ Admin: this is the platform owner who serves as the moderator and can suspend or
 
 ## Core Modules:
 
-Auth: this module is responisble for deciding what actions a user can perform on the platform. You can think of it as the RBAC enforcer
+Auth: this module is responsible for user authentication and authotization. It liases with the RBAC middleware to decide what actions a user can perform on the platform. It owns: Registration, Login, Password Hashing, JWT, Refresh Tokens, and Password Reset.
 
-Users: this module covers the Candidates, Employers, and the Admin. Think of it as a general community for everyone
+Users: this module covers the Candidates, Employers, and the Admin. Think of it as a general community for everyone where users are later separated by their role.
 
-Profiles: this module highlights the category a user falls into and based on the role, authorizations are granted to carry out certain actions. Think of this module as a role specific community
+Profiles: this module contains professional information about the candidate such as bio, skills, resume, location, and experience. This of it as an ID card for candidate
 
-Companies: this module is for Employers and the authorization to post jobs, and review, hire/reject candidates is fully granted
+Companies: this module holds the information of the company such as company's name, website, description, and logo. Think of it as the ID card for company
 
-Jobs: this is the soul module of the platform as it connects both the Candidates and the Employer. A job can have multiple Candidate's application
+Jobs: this is the soul module of the platform as it connects both the Candidates and the Employer. A job handles the posting of jobs and can have multiple Candidate's application
 
 Applications: This is an interesting module as it ties the Candidates to the jobs. A Candidate can have multiple applications
 
@@ -38,7 +38,7 @@ Employer: which the Company would review and if they are satisfied with his prof
 
 ## Future Features:
 
-Notifications: this is like an asynchronous operation that runs in the background without interupting the current task performed by the system. Think of it as a side effect of the outcome of some certain operations. For example, after a successful registration, send a notification on the screen/ or log a message to the console, if registration failed maybe because of already available email, ping a message to the screen or log a message "Email already exists" to the console.
+Notifications: this can be either asynchronous operation that runs in the background without interupting the current task performed by the system, or synchronous operations like side effect of certain executions. For example, application submitted would immediately create Notification record inside the same request (synchronous), while sending emails later via RabbitMQ, BullMQ, Queue would be asynchronous.
 
 Messaging: Asynchronous operation just like notification, just not within the application, but maybe an email to the user via for example mailtrap etc.
 
@@ -50,10 +50,28 @@ Analytics: Maybe a weekly analysis of a percentage of jobs that was posted, a pe
 
 ## Domain relationships
 
-user - related -> profile
+User - related -> Profile
+
+User - related -> Applications
 
 Company - related -> Jobs
 
 Job - related -> Applications
 
-Application - related -> User
+Employer(User) - related -> Company
+
+Bigger picture
+
+User -> Profile
+|
+-> Applications
+|
+-> Bookmarks
+
+Company
+|
+-> Jobs
+
+Job
+|
+-> Applications
