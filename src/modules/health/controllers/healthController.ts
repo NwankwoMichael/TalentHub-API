@@ -23,13 +23,9 @@ export const getDBHealthStatus = catchAsync(
 
       logger.error(`Health check database connection failed`);
 
-      throw new DatabaseError(errMsg, {
-        success: false,
-        status: "DOWN",
-        timestamp: new Date().toISOString(),
-        services: {
-          database: "DISCONNECTED",
-        },
+      throw new DatabaseError("Database connection failed", {
+        code: "HEALTH_CHECK_FAILED",
+        errors: { database: "disconnected" },
       });
     });
 
