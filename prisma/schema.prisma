@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+ACTIVE
+SUSPENDED
+DEACTIVATED
+}
+
+enum UserRole {
+ADMIN
+EMPLOYER
+CANDIDATE
+}
+
+enum JobLocation {
+REMOTE
+HYBRID
+ONSITE
+}
+
+enum JobType{
+FULLTIME
+PARTTIME
+CONTRACT
+}
+
+enum JobStatus{
+ACTIVE
+CLOSED
+EXPIRED
+}
+
+enum ApplicationStatus {
+PENDING
+REVIEWED
+INTERVIEW
+OFFERED
+HIRED
+REJECTED
+}
+
+model User {
+id String @id @default(uuid())
+
+email String @unique
+
+password String
+
+role UserRole @default(CANDIDATE) 
+
+status UserStatus @default(ACTIVE)
+
+createdAt DateTime @default(now())
+
+updatedAt DateTime @updatedAt
+
+profile Profile?
+
+companies Company[]
+
+bookmarks Bookmark[]
+
+applications Application[]
+}
+
+model Profile {
+id String @id @default(uuid())
+
+userId String @unique
+
+user User @relation(fields: [userId], references: [id])
+
+bio String
+
+location String
+
+years_of_Experience Int
+
+resume_Url String
+
+skills String[]
+
+}
+
+model Company {
+id String @id @default(uuid())
+
+name String
+
+website String
+
+description String 
+
+logoUrl String?
+
+ownerId String
+
+owner User @relation(fields: [ownerId], references: [id])
+
+jobs Job[] 
+
+}
+
+model Job {
+id String @id @default(uuid())
+
+title String
+
+description String
+
+salary Int
+
+location JobLocation
+
+status JobStatus
+
+type JobType
+
+companyId String
+
+company Company @relation(fields: [companyId], references: [id])
+
+applications Application[]
+
+bookmarks Bookmark[]
+
+}
+
+model Application {
+id String @id @default(uuid())
+
+userId String
+
+user User @relation(fields:[userId], references: [id])
+
+jobId String
+
+job Job @relation(fields: [jobId], references: [id])
+
+@@unique([userId, jobId])
+
+status ApplicationStatus @default(PENDING)
+
+createdAt DateTime @default(now())
+
+updatedAt DateTime @updatedAt
+
+}
+
+model Bookmark {
+id String @id @default(uuid())
+
+userId String
+
+user User @relation(fields: [userId], references: [id])
+
+jobId String
+
+job Job @relation(fields: [jobId], references: [id])
+
+@@unique([userId, jobId])
+
+}

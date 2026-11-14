@@ -28,7 +28,7 @@ Applications: This is an interesting module as it ties the Candidates to the job
 
 Candidate Registration: a Candidate registers on the TalentHub platform via /register
 
-Profile Creation: then proceeds to create a profile which will highlight Candidates location, Job preference, role, skills, Resume, etc.
+Profile Creation: then proceeds to create a profile which will highlight Candidates location, Job preference, skills, Resume, etc.
 
 Job Discovery: upon searching for jobs on the platform, the Candidate finds a Job posted by company which matches his/her skill
 
