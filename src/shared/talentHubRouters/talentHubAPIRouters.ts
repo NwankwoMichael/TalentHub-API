@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { authRouter } from "../../modules/auth/routes/authRoutes.js";
+import { companyRouter } from "../../modules/company/routes/company,routes.js";
 
-export const talentHubAPIRouter = Router();
+const talentHubAPIRouter = Router();
 
-talentHubAPIRouter.use(authRouter);
+talentHubAPIRouter.use("/auth", authRouter);
+talentHubAPIRouter.use("/company", companyRouter);
+
+export { talentHubAPIRouter };

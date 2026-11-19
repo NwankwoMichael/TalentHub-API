@@ -5,7 +5,7 @@ import type {
   UserData,
   UserRegisterInput,
   UserLoginInput,
-} from "../types/types.js";
+} from "../types/user.auth.types.js";
 
 export async function findUserByEmail(
   userEmail: string,

@@ -24,6 +24,15 @@ EMPLOYER
 CANDIDATE
 }
 
+enum CompanySize{
+  SIZE_1_10 @map("1-10")
+  SIZE_11_50 @map("11-50")
+  SIZE_51_200 @map("51-200")
+  SIZE_201_500 @map("201-500")
+  SIZE_501_1000 @map("501-1000")
+  SIZE_1000_PLUS @map("1000+")
+}
+
 enum JobLocation {
 REMOTE
 HYBRID
@@ -92,6 +101,9 @@ resume_Url String
 
 skills String[]
 
+
+@@index([userId])
+
 }
 
 model Company {
@@ -99,17 +111,32 @@ id String @id @default(uuid())
 
 name String
 
+slug String @unique
+
 website String
 
-description String 
+description String @db.Text
+
+industry String
 
 logoUrl String?
 
+headquarters String
+
+size CompanySize
+
+foundedYear Int?
+
 ownerId String
+
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 
 owner User @relation(fields: [ownerId], references: [id])
 
 jobs Job[] 
+
+@@index([ownerId])
 
 }
 
@@ -136,6 +163,8 @@ applications Application[]
 
 bookmarks Bookmark[]
 
+@@index([companyId])
+
 }
 
 model Application {
@@ -157,6 +186,8 @@ createdAt DateTime @default(now())
 
 updatedAt DateTime @updatedAt
 
+@@index([userId])
+
 }
 
 model Bookmark {
@@ -171,5 +202,7 @@ jobId String
 job Job @relation(fields: [jobId], references: [id])
 
 @@unique([userId, jobId])
+
+@@index([userId])
 
 }

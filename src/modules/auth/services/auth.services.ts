@@ -14,7 +14,7 @@ import { generateJwtToken } from "../../../shared/lib/jwt.js";
 import type { RegisterInput } from "../dto/register/register.validation.dto.js";
 
 import type { LoginInput } from "../dto/login/login.validation.dto.js";
-import type { LoginResponse, UserResponse } from "../types/types.js";
+import type { LoginResponse, UserResponse } from "../types/user.auth.types.js";
 import { ConflictError } from "../../../shared/errors/conflictError.js";
 import { UnauthorizedError } from "../../../shared/errors/unauthorizedError.js";
 import { ForbiddenError } from "../../../shared/errors/forbiddenError.js";
@@ -45,7 +45,7 @@ export class AuthService {
     });
 
     return {
-      id: newUser.id,
+      userId: newUser.id,
       email: newUser.email,
       role: newUser.role,
       status: newUser.status,
@@ -72,7 +72,7 @@ export class AuthService {
     const accessToken = generateJwtToken(user);
 
     return {
-      id: user.id,
+      userId: user.id,
       email: user.email,
       role: user.role,
       status: user.status,
@@ -91,6 +91,11 @@ export class AuthService {
 
     checkUserStatus(user);
 
-    return user;
+    return {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    };
   }
 }

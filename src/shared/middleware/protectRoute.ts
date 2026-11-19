@@ -36,7 +36,7 @@ export const protectRoute = catchAsync(
       throw error;
     }
 
-    const activeUser = await authService.verifyActiveUser(decoded.id);
+    const activeUser = await authService.verifyActiveUser(decoded.userId);
     req.currentUser = activeUser;
     next();
   },

@@ -1,7 +1,10 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import type { SignOptions } from "jsonwebtoken";
-import type { TokenPayload, UserData } from "../../modules/auth/types/types.js";
+import type {
+  TokenPayload,
+  UserData,
+} from "../../modules/auth/types/user.auth.types.js";
 
 export function signAccessToken(payload: TokenPayload): string {
   const options: SignOptions = { expiresIn: env.jwtAccessExpiresIn };

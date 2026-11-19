@@ -5,6 +5,9 @@ CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'SUSPENDED', 'DEACTIVATED');
 CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'EMPLOYER', 'CANDIDATE');
 
 -- CreateEnum
+CREATE TYPE "CompanySize" AS ENUM ('1-10', '11-50', '51-200', '201-500', '501-1000', '1000+');
+
+-- CreateEnum
 CREATE TYPE "JobLocation" AS ENUM ('REMOTE', 'HYBRID', 'ONSITE');
 
 -- CreateEnum
@@ -46,10 +49,17 @@ CREATE TABLE "Profile" (
 CREATE TABLE "Company" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
     "website" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "industry" TEXT NOT NULL,
     "logoUrl" TEXT,
+    "headquarters" TEXT NOT NULL,
+    "size" "CompanySize" NOT NULL,
+    "foundedYear" INTEGER,
     "ownerId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Company_pkey" PRIMARY KEY ("id")
 );
@@ -96,7 +106,25 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "Profile_userId_key" ON "Profile"("userId");
 
 -- CreateIndex
+CREATE INDEX "Profile_userId_idx" ON "Profile"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Company_slug_key" ON "Company"("slug");
+
+-- CreateIndex
+CREATE INDEX "Company_ownerId_idx" ON "Company"("ownerId");
+
+-- CreateIndex
+CREATE INDEX "Job_companyId_idx" ON "Job"("companyId");
+
+-- CreateIndex
+CREATE INDEX "Application_userId_idx" ON "Application"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Application_userId_jobId_key" ON "Application"("userId", "jobId");
+
+-- CreateIndex
+CREATE INDEX "Bookmark_userId_idx" ON "Bookmark"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Bookmark_userId_jobId_key" ON "Bookmark"("userId", "jobId");

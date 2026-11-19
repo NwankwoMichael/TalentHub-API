@@ -8,6 +8,6 @@ export type AsyncRequestHandler = (
 ) => Promise<unknown>;
 
 export interface JwtUserPayload {
-  id: string;
+  userId: string;
   role: UserRole;
 }
