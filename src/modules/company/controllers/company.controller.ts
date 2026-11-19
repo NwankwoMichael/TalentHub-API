@@ -15,7 +15,7 @@ const companyServices = new CompanyServices();
 export const createCompany = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
     const data = req.body as CreateCompanyInput;
-    const ownerId = req.currentUser!.userId;
+    const ownerId = req.currentUser!.id;
 
     const newCompany = await companyServices.createCompanyService(
       ownerId,
@@ -73,7 +73,7 @@ export const listCompanies = catchAsync(
 
 export const getMyCompanies = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
-    const ownerId = req.currentUser!.userId;
+    const ownerId = req.currentUser!.id;
 
     const myCompanies =
       await companyServices.getCompaniesByOwnerService(ownerId);
@@ -103,7 +103,7 @@ export const updateCompany = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
     const { id } = req.params as CompanyIdParamInput;
     const data = req.body as UpdateCompanyInput;
-    const { userId: requesterId, role: requesterRole } = req.currentUser!;
+    const { id: requesterId, role: requesterRole } = req.currentUser!;
 
     const updatedCompany = await companyServices.updateCompanyService(
       id,
@@ -122,7 +122,7 @@ export const updateCompany = catchAsync(
 export const deleteCompany = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
     const { id } = req.params as CompanyIdParamInput;
-    const { userId: requesterId, role: requesterRole } = req.currentUser!;
+    const { id: requesterId, role: requesterRole } = req.currentUser!;
 
     await companyServices.deleteCompanyService(id, requesterId, requesterRole);
 

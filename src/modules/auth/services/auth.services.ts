@@ -45,7 +45,7 @@ export class AuthService {
     });
 
     return {
-      userId: newUser.id,
+      id: newUser.id,
       email: newUser.email,
       role: newUser.role,
       status: newUser.status,
@@ -72,7 +72,7 @@ export class AuthService {
     const accessToken = generateJwtToken(user);
 
     return {
-      userId: user.id,
+      id: user.id,
       email: user.email,
       role: user.role,
       status: user.status,
@@ -91,11 +91,6 @@ export class AuthService {
 
     checkUserStatus(user);
 
-    return {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-    };
+    return user;
   }
 }

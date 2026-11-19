@@ -4,7 +4,7 @@ import type { User } from "@prisma/client";
 export type UserData = User;
 
 export type UserResponse = {
-  userId: User["id"];
+  id: User["id"];
   email: User["email"];
   role: User["role"];
   status: User["status"];
