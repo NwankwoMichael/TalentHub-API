@@ -25,7 +25,7 @@ import type { UserRole } from "@prisma/client";
 import { UnauthorizedError } from "../../../shared/errors/unauthorizedError.js";
 
 export class CompanyServices {
-  async verifyCompanyOwnerShip(
+  async verifyCompanyOwnership(
     companyId: string,
     requesterId: string,
     requesterRole: string,
@@ -105,7 +105,7 @@ export class CompanyServices {
     requesterRole: UserRole,
     data: UpdateCompanyInput,
   ): Promise<CompanyData> {
-    const company = await this.verifyCompanyOwnerShip(
+    const company = await this.verifyCompanyOwnership(
       companyId,
       requesterId,
       requesterRole,
@@ -129,7 +129,7 @@ export class CompanyServices {
     requesterId: string,
     requesterRole: string,
   ) {
-    await this.verifyCompanyOwnerShip(companyId, requesterId, requesterRole);
+    await this.verifyCompanyOwnership(companyId, requesterId, requesterRole);
 
     if (requesterRole !== "ADMIN") {
       const activeJobsCount = await countActiveCompanyJobs(companyId);

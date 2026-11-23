@@ -27,7 +27,7 @@ import {
 
 const companyRouter = Router();
 
-companyRouter.use(protectRoute);
+// PUBLIC ROUTES (No authentication required)
 
 companyRouter.get(
   "/",
@@ -39,15 +39,29 @@ companyRouter.get(
   validateParams(CompanySlugParamSchema),
   getCompanyBySlug,
 );
-companyRouter.get("/owner/me", restrictTo("EMPLOYER", "ADMIN"), getMyCompanies);
+
+// Protected specific GET routes placed ABOVE ":id" to prevent route collision
+
+companyRouter.get(
+  "/owner/me",
+  protectRoute,
+  restrictTo("EMPLOYER", "ADMIN"),
+  getMyCompanies,
+);
 companyRouter.get(
   "/owner/:ownerId",
+  protectRoute,
   restrictTo("ADMIN"),
   validateParams(CompanyOwnerIdParamSchema),
   getMyCompany,
 );
 
+// PUBLIC DYNAMIC ":id" ROUTE (Comes AFTER all static/prefixed GET routes)
+
 companyRouter.get("/:id", validateParams(CompanyIdParamSchema), getCompanyById);
+
+// PROTECTED MUTATION ROUTES (Auth required for all below)
+companyRouter.use(protectRoute);
 
 companyRouter.post(
   "/",

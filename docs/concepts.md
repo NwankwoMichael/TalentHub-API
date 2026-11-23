@@ -304,7 +304,7 @@ No! A candidate will be restricted via the restrictTo middleware(which accepts u
 
 Where Should this rule live?
 
-The rule of whether a candidate not being permited should be handled in the bussiness logic which is in services.
+The rule of whether a candidate not being permited should be handled by the restrictTo middleware which is located in /shared/middlewares
 
 <!-- Assignment 7.4 -->
 
@@ -370,6 +370,172 @@ Forbidden error: which will occur when an unAuthorized user tries to create a co
 validation error: when the validateBody middleware fails
 
 NotFound Error: when the verifyCompanyOwnership inctance fails to find a matching company in the database to the provided companyId
+
+Challenges I encountered:
+I early assigned JWTUSerPayload (which references userId instead of id) to currentUser in types/express.d.ts (currentUser?: JWTUserPayload) this caused a misalignment between prisma and my DTOs because userId is only suppose to exist in the TokenPayload. This caused my Postman createCompany request to fail. Initially, I tried manually mapping between Prisma and my DTO, but this was kind of repetitive and has a higher risk of me forgetting to map and just returning user which referenced id instead of userId, thereby always making TypeScript to yell at potential runtime bug.... What I did was to reassign currentUser in the express.d.ts to UserResponse so it matches what my protectRoute assigns at runtime (which is id not userId, in sync with prisma), then I kept the JWT claims only JWTUSerPayload.
+So, JWT Token (decoded) is typed as JWTUserResponse thereby resulting to decoded.userId inside protectRoute. Whereas verified User (req.currentUser) is typed as UserResponse which references id (req.currentUser!.id) in all and future modules.
+Result, is the Postman create company request now passes with a 201 status code and my CI passes on git Push.
+
+Note: Earlier I wanted TalentHub company endpoints to be accessible only to registered and authenticated users.
+
+After reviewing how recruitment platforms typically operate, I decided to allow public access to:
+
+GET /company GET /company/:id GET /company/slug/:slug
+
+This allows search engines, recruiters, candidates, and unauthenticated visitors to discover companies on the platform.
+
+Mutation endpoints remain protected and require authentication and authorization.
+
+POST /company PATCH /company/:id DELETE /company/:id
+
+Protected owner routes also remain authenticated:
+
+GET /company/owner/me GET /company/owner/:ownerId
+
+Future Vision:
+Multiple Employers can manage one company.
+
+Current Implementation:
+One Owner per Company
+
+Phase 8: Job Module
+
+The Job module allows employers to create, manage, and publish jobs under their companies.
+
+<!-- Assignment 8.1 -->
+
+## Can a Job exist without a company?:
+
+No, a job is directly related to the company module
+
+## Can a company have multiple jobs?:
+
+Yes. A company can have multiple jobs
+
+## Can candidates create Jobs?:
+
+No, only an employer can create jobs under his company. Candidates can create applications for jobs.
+
+<!-- Assignment 8.2 -->
+
+Required fields:
+title: this is a required field as it enhances job identity and I don't see how a candidate will locate or apply for a job without a title. The title indicates if the job is a fit for any candidate, and also enables the backend generateSlug utility genenrate unique slugs.
+
+description: This further narate what the job is all about like it core business idea, what the day to day of the job will be like, and most especially, what requirements are expected of a candidate.
+
+companyId: This ties the job to it company, and ideally should be provided by the employer to establish that he/ she owns a company.
+
+workType: This indicates if the job is a fulltime, contract, or parttime. Which further helps candidates know what the job is all about
+
+experienceLevel: this is very important as it tells the years of expertise a candidate must have in order to be a fit for the job.
+
+location: This is where the employer indicate where hired candidates would work from and it has an enum of JobLocation which can either be REMOTE, HYBRID, or ON_SITE.
+
+companyId: this tells prisma which of the employer's companies owns the job
+
+Optional field:
+salaryMin & salaryMax: the employer can either choose to indicate the minimum or maximum salary that a candidate should expect. This in my opinion, shows transparency and makes the hiring process less cumbersome if indicated as the candidate already accepts the indicated salary range
+
+{
+title;
+description;
+location;
+workType;
+experienceLevel;
+salaryMin?;
+salaryMax?;
+companyId;
+}
+
+## Key Design Choices for Job Module
+
+Why companyId is in CreateJobSchema (and omitted in UpdateJobSchema): Because one employer can own multiple companies, they must specify which company is posting the job on creation—and in JobServices, you'll call companyServices.verifyCompanyOwnership(data.companyId, requesterId, requesterRole) so an employer cannot post a job under a competitor's company. Omitting companyId from UpdateJobSchema prevents transferring an existing job listing to another company.
+
+Why status is only in UpdateJobSchema: Newly created jobs default to ACTIVE in Prisma, while employers use PATCH /jobs/:id to change status to CLOSED or EXPIRED once the role is filled.
+
+Rich Job Search Filters: ListJobsQuerySchema already supports filtering by keyword (search), location, workType, experienceLevel, and companyId alongside pagination.
+
+<!-- Assignment 8.6 -->
+
+Repository Design
+
+possible methods:
+
+createJob():
+
+findjobById():
+
+findJobBySlug():
+
+findJobs():
+
+findJobsByCompany():
+
+updateJob():
+
+deleteJob():
+
+countApplications()
+
+## Should repositories enforce ownership?:
+
+No. Repositories should focus solely on database relations, while the enforcemant of ownership is left to the services (verifyJobOwnership instance in jobServices)
+
+<!-- Assignment 8.8 -->
+
+## Should jobs be public?
+
+I will allow jobs to be public because candidates need to search jobs, but creating of jobs would be retricted to only EMPLOYER
+
+EXAMPLES:
+GET /jobs
+Get /jobs/:id
+Get .job/:slug
+
+-------- Would all be public
+
+<!-- Assignment 8.9 -->
+
+Protected Routes
+
+EXAMPLES:
+POST /jobs
+PATCH /jobs/:id
+DELETE /jobs/:id
+
+------------- Would all be protected and RBAC would be enforced in favor of only EMPLOYER
+
+<!-- Assignment 8.11 -->
+
+---------------Job Status :
+This introduces:
+enum JobStatus{
+ACTIVE
+CLOSED
+EXPIRED
+}
+
+Questions:
+Can candidates apply to:
+
+Jobs with JobStatus === "ACTIVE": Yes, because the active status signifies that employer is still looking for the candidate who best fits.
+
+Jobs with JobStatus === "CLOSED": No, because it simply indicates that the job has been taken, i.e., a candidate has been hired.
+
+Jobs with JobStatus === "EXPIRED": No, because usually recruitment platforms stipulates an expiry date to every job and after that expiry date, applying would just be obselete
+
+<!-- Assignment 8.13 -->
+
+Error Scenarios:
+Company Not Found: this refers to the scenario when a user tries to hit the GET "talenthub/api/v1/job/" routes and the companyService.getCompanyById in the getJobs handler returns null.. (404 NotFound Erorr)
+
+Non-owner Creating Job: This error refers to the scenario when the companyService.verifyCompanyOwnership returns null, meaning the requesterID does not match the ownerId in the company.
+
+Invalid Salary Range: This is when the salaryMax < salaryMin conditional returns true, especially in the jobService.updateJob service handler. A salaryMax should ideally be more than the salaryMin.. (400 validation Error)
+
+Candidate Creating Job: This will return a 403 forbidden error as soon as the restrictTo("EMPLOYER") middleware is hit right before the request hits the createJob controller.
+
+Job Not Found: This error is a 404 NotFound error which occurs when a user hits the GET /talenthub/api/v1/job/:id endpoint as the getJobById controller calls the findJobByIdDB which will lookup the database for job id matching the req.param (jobId).
 
 <!--
 

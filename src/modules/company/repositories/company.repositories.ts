@@ -65,7 +65,7 @@ export async function updateCompanyDB(
         industry: updateField.industry,
       }),
       ...(updateField.website !== undefined && {
-        industry: updateField.website,
+        website: updateField.website,
       }),
       ...(updateField.headquarters !== undefined && {
         headquarters: updateField.headquarters,

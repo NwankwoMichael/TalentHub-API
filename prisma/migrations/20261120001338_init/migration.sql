@@ -17,6 +17,9 @@ CREATE TYPE "JobType" AS ENUM ('FULLTIME', 'PARTTIME', 'CONTRACT');
 CREATE TYPE "JobStatus" AS ENUM ('ACTIVE', 'CLOSED', 'EXPIRED');
 
 -- CreateEnum
+CREATE TYPE "JobExperienceLevel" AS ENUM ('ENTRY', 'MID', 'SENIOR', 'LEAD', 'EXECUTIVE');
+
+-- CreateEnum
 CREATE TYPE "ApplicationStatus" AS ENUM ('PENDING', 'REVIEWED', 'INTERVIEW', 'OFFERED', 'HIRED', 'REJECTED');
 
 -- CreateTable
@@ -68,12 +71,17 @@ CREATE TABLE "Company" (
 CREATE TABLE "Job" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "salary" INTEGER NOT NULL,
+    "salaryMin" INTEGER,
+    "salaryMax" INTEGER,
     "location" "JobLocation" NOT NULL,
-    "status" "JobStatus" NOT NULL,
-    "type" "JobType" NOT NULL,
+    "workType" "JobType" NOT NULL,
+    "experienceLevel" "JobExperienceLevel" NOT NULL,
+    "status" "JobStatus" NOT NULL DEFAULT 'ACTIVE',
     "companyId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Job_pkey" PRIMARY KEY ("id")
 );
@@ -113,6 +121,9 @@ CREATE UNIQUE INDEX "Company_slug_key" ON "Company"("slug");
 
 -- CreateIndex
 CREATE INDEX "Company_ownerId_idx" ON "Company"("ownerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Job_slug_key" ON "Job"("slug");
 
 -- CreateIndex
 CREATE INDEX "Job_companyId_idx" ON "Job"("companyId");

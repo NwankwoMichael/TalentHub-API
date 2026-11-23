@@ -56,7 +56,7 @@ Auth Role: EMPLOYER(ACTIVE)
 Request payload:
 Missing required fields (e.g., omitted website or description < 20 xhars, or invalid size enum>)
 
-Expected Status: 401 Unauthorized Error
+Expected Status: 400 Validation Error
 
 Update Company
 Test Case: ✅ Owner
@@ -117,7 +117,7 @@ Auth Role: Any authenticated User
 Route Param:
 Valid UUID od an existing company
 
-Expected Status: 401 Unathorized
+Expected Status: 400 Validation error
 
 Expected Behavior & Assertions:
 validateParams(CompanyIdParamSchema) (z.uuid()) before Prisma queries PostgreSQL.
