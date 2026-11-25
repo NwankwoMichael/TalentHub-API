@@ -66,6 +66,7 @@ INTERVIEW
 OFFERED
 HIRED
 REJECTED
+WITHDRAWN
 }
 
 model User {
@@ -103,7 +104,7 @@ bio String
 
 location String
 
-years_of_Experience Int
+years_of_experience Int
 
 resume_Url String
 
@@ -193,6 +194,8 @@ userId String
 user User @relation(fields:[userId], references: [id])
 
 jobId String
+
+coverLetter String?
 
 job Job @relation(fields: [jobId], references: [id])
 
