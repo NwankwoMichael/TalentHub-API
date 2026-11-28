@@ -398,6 +398,8 @@ Multiple Employers can manage one company.
 Current Implementation:
 One Owner per Company
 
+---
+
 Phase 8: Job Module
 
 The Job module allows employers to create, manage, and publish jobs under their companies.
@@ -537,26 +539,425 @@ Candidate Creating Job: This will return a 403 forbidden error as soon as the re
 
 Job Not Found: This error is a 404 NotFound error which occurs when a user hits the GET /talenthub/api/v1/job/:id endpoint as the getJobById controller calls the findJobByIdDB which will lookup the database for job id matching the req.param (jobId).
 
-<!--
+---
 
-1. Edit schema.prisma
+PHASE 9: Application module
 
-2. npx prisma validate
+Questions--
 
-3. npx prisma migrate dev --name meaningful_name
+<!-- Assignment 9.1 -->
 
-4. npx prisma generate
+## Can a Candidate Apply Twice?
 
-5. Run your TypeScript code
+No. There should be some candidate payload precisely Id that should be attached to an application so when a candidate tries to create an application, his id is ran through the database and only if null is returned can a new application be created.
 
- -->
+## Can Employer Apply?
 
- <!-- 
- 
- DeleteUser which is used to delete user, we can get the user id from the current session if the user is trying to delete their own account. One way to be sure is to have the user type in their password and like a text confirming they want their account deleted. If the delete is being done by an ADMIN, we need the user id or password
+No, an employer can only create Jobs, and review applications. Only a candidate should be allowed to apply. To enforce this, the create application route would be protected by the restrictTo middleware.
+
+Can Candidate Apply To Closed Job?
+No. A closed job should signal an end to the availability of the Job and also it hiring process. Only active jobs can be applied for.
+
+Future thoughts:
+Closed jobs should only be visibe for 24 hours after their closed status is enacted, afterwards, they should remain in the database for records and reference purposes.
+
+<!-- Assignment 9.2 -->
+
+Application Status Lifecycle
+introduce:
+enum ApplicationStatus {
+PENDING
+REVIEWED
+INTERVIEW
+OFFERED
+HIRED
+REJECTED
+WITHDRAWN
+}
+
+Flow:
+PENDING -> REVIEWED -> INTERVIEW -> OFFERED -> HIRED
+
+OR: REJECTED
+
+Candidate may: WITHDRAW
+before hiring
+
+<!-- Assignment 9.4 -->
+
+Validation Design
+Questions:
+
+## Cover Letter Length?
+
+minimum: 20
+maximum: 5000
+
+## Status Validation?
+
+Must be ApplicationStatus enum values only.
+
+I also excluded the WITHDRAWN ApplicationStatus in the application dto and would include it in the candidate dto since it is an action performed by the candidate.
+
+## Job ID?
+
+Must be valid UUID
+
+<!-- Assignment Design -->
+
+Possible methods:
+createApplicationDB()
+findApplicationByIdDB()
+findUserApplicationsDB()
+findJobApplicationsDB()
+updateApplicationStatusDB()
+withdrawApplicationDB()
+deleteAplicationsDB()
+findApplicationByCandidateAndJobDB()
+
+Note:
+
+1. I also decided that only candidates with a completed profile and uploaded resume can create an application for a job
+
+2. <!--
+
+DeleteUser which is used to delete user, we can get the user id from the current session if the user is trying to delete their own account. One way to be sure is to have the user type in their password and like a text confirming they want their account deleted. If the delete is being done by an ADMIN, we need the user id or password
 
 SuspendUser which can only be done by an ADMIN, is used to suspend a user from the platform. User ID or Email will do just fine
 
-findAllUser which is used to get all users in the database, we just need to run an equivalent of SELECT ALL FROM the user table 
- 
-  -->
+Note:
+Since I started the application module implementation before the profile module and I wanted only candidates with complete profile and profile resume_Url to be able to apply to jobs, I created a profile repository as I didn't want to include database logic in my applicationService:import { prisma } from "../../../shared/config/prisma.js";
+
+export async function findProfileByUserIdDB(userId: string) {
+return prisma.profile.findUnique({
+where: { userId },
+select: { id: true, resume_Url: true },
+});
+}
+then I created a profile.service:import { BaddRequestError } from "../../../shared/errors/badRequestError.js";
+import { findProfileByUserIdDB } from "../repositories/profile.repositories.js";
+
+export class ProfileServices {
+async verifyCandidateReadyToApply(userId: string) {
+const profile = await findProfileByUserIdDB(userId);
+
+    if (!profile || !profile.resume_Url) {
+      throw new BaddRequestError(
+        "Please complete your profile and upload a resume before applying",
+      );
+    }
+    return profile;
+
+}
+}
+
+For the controller, because at this point I wanted to preserve every application for future purposes, I decided to exclude a deleteApplication controller handler. I wanted candidate to be only able to withdraw application which I achieved by simply creating a service that simply changes ApplicationStatus after candidate authentication of course.
+
+<!-- Assignment 9.8 -->
+
+Employer Application Access:
+Can any Employer review any application?
+No, an Employer can only review applications tied to a company he/she owns which is the purpose of the verifyCompanyOwnership...
+
+<!-- 9.10 -->
+
+All routes in the application module are protected via protectRoute as this is a very critical part of the business and contains very sensitive data.
+
+I decided to place the /:jobId/apply and /:jobId/applications in the job.router.ts file to keep the architecture consistent (i.e., job related routes are placed in the job.router file)
+
+while other application related routes like /me, /:applicationId/status, /:application/withdraw
+
+<!-- Assignment 9.12 -->
+
+Test Cases: Note I am yet to fully test my endpoint because the success of my application routes depends on if profile is completed and includes resume_Url which isn't currently available. I will commence to implementing the profile module next
+
+---
+
+Phase 10:
+
+## Profile Module
+
+<!-- The most basic question that the implementation of profile module should answer -->
+
+What makes a candidate employable on TalentHub?
+
+<!-- Assignment 10.1 -->
+
+Profile Domanin Questions
+
+## Can A user have multiple profiles?
+
+No. One single profile per user. That way, the user integrity has the user Profile as it single source of truth. This would be defeated if one user can have multiple accounts.
+
+## Can Employers have profile?
+
+Yes. An employer is a user too and this profile serves a a user information center.
+
+Can Admin have profiles?
+Not necessary so no. Admin usually don't need: Profile, Resume, Skills, Experience
+
+<!-- Assignment 10.2 -->
+
+Review Current Profile Model:
+Current:
+Profile {
+id
+userId
+bio
+location
+years_of_experience
+resume_Url
+skills
+}
+
+required:
+bio, location, years_of_experience
+
+Optional:
+resume_Url
+
+During creation but required before job application
+
+<!-- Assignment 10.3 -->
+
+DTO Design
+Create:
+
+CreateProfileDTO:
+
+{
+bio;
+location;
+years_of_experience;
+resume_Url?;
+skills;
+}
+
+UpdateProfileDTO
+CreateProfileSchema.partial()
+
+Note: On second thought, I decided everything was optional during creation aside from skills which has a default empty array. So, a candidate can create a partial profile first and add their resume_Url later via PATCH /profiles/me. However, only candidates with completed profile and resume_Url can apply for jobs
+
+<!-- Assignment 10.5 -->
+
+Repository Design
+
+methods:
+createProfileDB()
+
+findProfileByIdDB() // No need for this as findProfielByUserIdDB does the returning of profile and also returns user data.
+
+findProfileByUserIdDB()
+
+updateProfileDB()
+
+deleteProfileDB()
+
+<!-- Assignment 10.6 -->
+
+Service Design
+
+ProfileServices:
+createProfile()
+
+getMyProfile()
+
+updateProfile()
+
+verifyCandidateReadyToApply()
+
+NOTE: In the profileService.updateProfileService, I decided to engineer the handler in a model where the route is PATCH /profiles/me with no ownership check as I will place the protectRoute middleware before the controller. So, the protectRoute middleware only passes when the userId matches the currentUser.id because the userId is extracted from req.currentUser!.id
+
+Also, I decided against a separate getMyProfileService as it has identical business logic as getProfileByUserIdService which fetches profile and throws a notFoundError("Profile not found") if it doesn't exist. So the controller would extract req.currentUser!id and pass it into profileService.getProfileUserIdService(userId).
+
+<!-- Assignment 10.7 -->
+
+Prevent Duplicate Profiles:
+questions:
+What if: Candidate already has profile, and tries POST /profile again?
+
+Answer:
+Return: 409 Conflict error "Profile already exists"
+
+<!-- Assignment 10.8 -->
+
+Ownership Rules
+
+Can Candidate A update Candidate B profile?
+
+Answer:
+No, which is where the protectRoute which extracts userId from req.currentUser ensures that profile.userId of the candidate trying to initiates an update === current user Id. Meaning that profile updates can only be performed by the actual candidate that owns the profile or an ADMIN.
+
+<!-- Assignment 10.9 -->
+
+Public vs Protected
+
+Should profiles be public:
+
+No. I architected talentHub to only grant profile route accessibility to logged in users as I would say profiles contains very candidate specific data and should be treated as sensitive hence the implementation of authentication.
+
+<!-- Assignment 10.10 -->
+
+Resune Strategy:
+I didn't implement upload for now, I just stored resume_Url. I intend to implement uploads via cloudinary URL soon after I complete all modules.
+
+<!-- Assignment 10.11 -->
+
+Profile Completion
+I created a helper in profileServices that takes the profile (assigned the ProfileData type) as an argument, synchronously checks if the required fields are present, then returns a boolean. Making this helper synchronous spears the service the need to query the database as all fields via ProfileData type are made available to the profile parameter. I returned the result of this helper in the getProfileByUserId service which will be handy for frontend badge implementation of completed Profile.
+
+<!-- Assignment 10.2 -->
+
+Error Scenarios
+
+Profile Not Found:
+
+404 NotFoundError
+
+Duplicate Profile:
+
+409 ConflictError
+
+Invalid Experience, Empty Skills,
+
+400 BadRequestError
+
+Unauthorized Access
+403 UnauthorizedError
+
+NOTE: I am holding off on implementing a user module as most of the user specific business logic are currently handled in the Auth, Profile, Company, Application module, which is completely fine for now.
+
+I would most definitely start to implement a user module when I begin to implement:
+
+Change Password
+
+Deactivate Account
+
+Delete Account
+
+Update Email
+
+Account Settings
+
+Notification Preferences
+
+Privacy Settings
+
+Then I would introduce modules/user with something like:
+
+user/
+├── controllers
+├── dto
+├── repositories
+├── routes
+├── services
+└── types
+
+for:
+
+GET /users/me
+
+PATCH /users/me
+
+PATCH /users/me/password
+
+DELETE /users/me
+
+PATCH /users/me/status
+
+<!--
+
+ (profile.dto.ts -> profile.types.ts -> profile.repositories.ts -> profile.services.ts -> profile.controllers.ts -> profile.routes.ts)
+
+ -->
+
+  <!-- 
+  
+  LinkedIn Posts Going Forward
+
+And absolutely.
+
+For future reference I'll point them out when I see them.
+
+Examples of good future posts:
+
+✅ JWT payload vs runtime user contract bug (the one you just posted)
+
+✅ Why RBAC belongs in middleware but ownership belongs in services
+
+✅ Building a reusable validation middleware with Zod
+
+✅ Why repositories shouldn't contain business rules
+
+✅ Designing public company/job discovery routes
+
+✅ Service-to-service ownership verification
+
+✅ Prisma + TypeScript pitfalls
+
+✅ Implementing graceful shutdown in Node.js
+
+✅ Building a CI pipeline for an Express + Prisma project
+
+Those aren't "I built X" posts.
+
+They're:
+
+Plain Text
+Problem
+↓
+Lessons Learned
+↓
+Solution
+
+which generally perform much better among engineers.
+  
+   -->
+
+   <!-- 
+   
+   What's Next?
+
+If this were my project roadmap:
+
+Plain Text
+Phase 11
+Bookmark Module
+
+Candidates can save jobs.
+
+Then:
+
+Plain Text
+Phase 12
+Interview / Hiring Workflow
+
+Then:
+
+Plain Text
+Phase 13
+File Uploads (Cloudinary)
+
+for:
+
+Plain Text
+Resume Upload
+Company Logos
+
+Then:
+
+Plain Text
+Phase 14
+Notifications
+
+Then:
+
+Plain Text
+Phase 15
+Testing
+
+(Jest / Vitest / Supertest)
+
+because by then the domain is stable.
+
+    -->

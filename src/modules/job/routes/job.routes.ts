@@ -8,6 +8,17 @@ import {
 } from "../../../shared/middleware/validate.js";
 
 import {
+  createApplication,
+  getJobApplications,
+} from "../../application/controllers/application.controllers.js";
+
+import {
+  ApplicationQuerySchema,
+  CreateApplicationSchema,
+  JobApplyParamsSchema,
+} from "../../application/dto/application.dto.js";
+
+import {
   CreateJobSchema,
   UpdateJobSchema,
   JobIdParamSchema,
@@ -39,6 +50,22 @@ jobRouter.get(
 jobRouter.get("/:id", validateParams(JobIdParamSchema), getJobById);
 
 jobRouter.use(protectRoute);
+
+jobRouter.post(
+  "/:jobId/apply",
+  restrictTo("CANDIDATE"),
+  validateParams(JobApplyParamsSchema),
+  validateBody(CreateApplicationSchema),
+  createApplication,
+);
+
+jobRouter.get(
+  "/:jobId/applications",
+  restrictTo("EMPLOYER", "ADMIN"),
+  validateParams(JobApplyParamsSchema),
+  validateQueries(ApplicationQuerySchema),
+  getJobApplications,
+);
 
 jobRouter.post(
   "/",

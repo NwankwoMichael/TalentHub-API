@@ -66,6 +66,7 @@ INTERVIEW
 OFFERED
 HIRED
 REJECTED
+WITHDRAWN
 }
 
 model User {
@@ -99,15 +100,17 @@ userId String @unique
 
 user User @relation(fields: [userId], references: [id])
 
-bio String
+bio String? @db.Text
 
-location String
+location String?
 
-years_of_Experience Int
+years_of_experience Int?
 
-resume_Url String
+resume_Url String?
 
-skills String[]
+skills String[] 
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 
 
 @@index([userId])
@@ -193,6 +196,8 @@ userId String
 user User @relation(fields:[userId], references: [id])
 
 jobId String
+
+coverLetter String?
 
 job Job @relation(fields: [jobId], references: [id])
 
