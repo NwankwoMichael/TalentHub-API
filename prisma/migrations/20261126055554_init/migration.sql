@@ -39,11 +39,13 @@ CREATE TABLE "User" (
 CREATE TABLE "Profile" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "bio" TEXT NOT NULL,
-    "location" TEXT NOT NULL,
-    "years_of_experience" INTEGER NOT NULL,
-    "resume_Url" TEXT NOT NULL,
+    "bio" TEXT,
+    "location" TEXT,
+    "years_of_experience" INTEGER,
+    "resume_Url" TEXT,
     "skills" TEXT[],
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
 );

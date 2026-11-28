@@ -100,15 +100,17 @@ userId String @unique
 
 user User @relation(fields: [userId], references: [id])
 
-bio String
+bio String? @db.Text
 
-location String
+location String?
 
-years_of_experience Int
+years_of_experience Int?
 
-resume_Url String
+resume_Url String?
 
-skills String[]
+skills String[] 
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 
 
 @@index([userId])

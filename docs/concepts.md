@@ -671,6 +671,200 @@ while other application related routes like /me, /:applicationId/status, /:appli
 
 Test Cases: Note I am yet to fully test my endpoint because the success of my application routes depends on if profile is completed and includes resume_Url which isn't currently available. I will commence to implementing the profile module next
 
+---
+
+Phase 10:
+
+## Profile Module
+
+<!-- The most basic question that the implementation of profile module should answer -->
+
+What makes a candidate employable on TalentHub?
+
+<!-- Assignment 10.1 -->
+
+Profile Domanin Questions
+
+## Can A user have multiple profiles?
+
+No. One single profile per user. That way, the user integrity has the user Profile as it single source of truth. This would be defeated if one user can have multiple accounts.
+
+## Can Employers have profile?
+
+Yes. An employer is a user too and this profile serves a a user information center.
+
+Can Admin have profiles?
+Not necessary so no. Admin usually don't need: Profile, Resume, Skills, Experience
+
+<!-- Assignment 10.2 -->
+
+Review Current Profile Model:
+Current:
+Profile {
+id
+userId
+bio
+location
+years_of_experience
+resume_Url
+skills
+}
+
+required:
+bio, location, years_of_experience
+
+Optional:
+resume_Url
+
+During creation but required before job application
+
+<!-- Assignment 10.3 -->
+
+DTO Design
+Create:
+
+CreateProfileDTO:
+
+{
+bio;
+location;
+years_of_experience;
+resume_Url?;
+skills;
+}
+
+UpdateProfileDTO
+CreateProfileSchema.partial()
+
+Note: On second thought, I decided everything was optional during creation aside from skills which has a default empty array. So, a candidate can create a partial profile first and add their resume_Url later via PATCH /profiles/me. However, only candidates with completed profile and resume_Url can apply for jobs
+
+<!-- Assignment 10.5 -->
+
+Repository Design
+
+methods:
+createProfileDB()
+
+findProfileByIdDB() // No need for this as findProfielByUserIdDB does the returning of profile and also returns user data.
+
+findProfileByUserIdDB()
+
+updateProfileDB()
+
+deleteProfileDB()
+
+<!-- Assignment 10.6 -->
+
+Service Design
+
+ProfileServices:
+createProfile()
+
+getMyProfile()
+
+updateProfile()
+
+verifyCandidateReadyToApply()
+
+NOTE: In the profileService.updateProfileService, I decided to engineer the handler in a model where the route is PATCH /profiles/me with no ownership check as I will place the protectRoute middleware before the controller. So, the protectRoute middleware only passes when the userId matches the currentUser.id because the userId is extracted from req.currentUser!.id
+
+Also, I decided against a separate getMyProfileService as it has identical business logic as getProfileByUserIdService which fetches profile and throws a notFoundError("Profile not found") if it doesn't exist. So the controller would extract req.currentUser!id and pass it into profileService.getProfileUserIdService(userId).
+
+<!-- Assignment 10.7 -->
+
+Prevent Duplicate Profiles:
+questions:
+What if: Candidate already has profile, and tries POST /profile again?
+
+Answer:
+Return: 409 Conflict error "Profile already exists"
+
+<!-- Assignment 10.8 -->
+
+Ownership Rules
+
+Can Candidate A update Candidate B profile?
+
+Answer:
+No, which is where the protectRoute which extracts userId from req.currentUser ensures that profile.userId of the candidate trying to initiates an update === current user Id. Meaning that profile updates can only be performed by the actual candidate that owns the profile or an ADMIN.
+
+<!-- Assignment 10.9 -->
+
+Public vs Protected
+
+Should profiles be public:
+
+No. I architected talentHub to only grant profile route accessibility to logged in users as I would say profiles contains very candidate specific data and should be treated as sensitive hence the implementation of authentication.
+
+<!-- Assignment 10.10 -->
+
+Resune Strategy:
+I didn't implement upload for now, I just stored resume_Url. I intend to implement uploads via cloudinary URL soon after I complete all modules.
+
+<!-- Assignment 10.11 -->
+
+Profile Completion
+I created a helper in profileServices that takes the profile (assigned the ProfileData type) as an argument, synchronously checks if the required fields are present, then returns a boolean. Making this helper synchronous spears the service the need to query the database as all fields via ProfileData type are made available to the profile parameter. I returned the result of this helper in the getProfileByUserId service which will be handy for frontend badge implementation of completed Profile.
+
+<!-- Assignment 10.2 -->
+
+Error Scenarios
+
+Profile Not Found:
+
+404 NotFoundError
+
+Duplicate Profile:
+
+409 ConflictError
+
+Invalid Experience, Empty Skills,
+
+400 BadRequestError
+
+Unauthorized Access
+403 UnauthorizedError
+
+NOTE: I am holding off on implementing a user module as most of the user specific business logic are currently handled in the Auth, Profile, Company, Application module, which is completely fine for now.
+
+I would most definitely start to implement a user module when I begin to implement:
+
+Change Password
+
+Deactivate Account
+
+Delete Account
+
+Update Email
+
+Account Settings
+
+Notification Preferences
+
+Privacy Settings
+
+Then I would introduce modules/user with something like:
+
+user/
+├── controllers
+├── dto
+├── repositories
+├── routes
+├── services
+└── types
+
+for:
+
+GET /users/me
+
+PATCH /users/me
+
+PATCH /users/me/password
+
+DELETE /users/me
+
+PATCH /users/me/status
+
 <!--
 
  (profile.dto.ts -> profile.types.ts -> profile.repositories.ts -> profile.services.ts -> profile.controllers.ts -> profile.routes.ts)
@@ -719,3 +913,51 @@ Solution
 which generally perform much better among engineers.
   
    -->
+
+   <!-- 
+   
+   What's Next?
+
+If this were my project roadmap:
+
+Plain Text
+Phase 11
+Bookmark Module
+
+Candidates can save jobs.
+
+Then:
+
+Plain Text
+Phase 12
+Interview / Hiring Workflow
+
+Then:
+
+Plain Text
+Phase 13
+File Uploads (Cloudinary)
+
+for:
+
+Plain Text
+Resume Upload
+Company Logos
+
+Then:
+
+Plain Text
+Phase 14
+Notifications
+
+Then:
+
+Plain Text
+Phase 15
+Testing
+
+(Jest / Vitest / Supertest)
+
+because by then the domain is stable.
+
+    -->
